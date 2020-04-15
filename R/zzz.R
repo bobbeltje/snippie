@@ -1,8 +1,8 @@
 
 .pkgenv <- new.env(parent=emptyenv())
+loc <- rappdirs::user_data_dir('snippie')
 
 .onLoad <- function(libname, pkgname){
-  loc <- rappdirs::user_data_dir('snippie')
   if (!dir.exists(loc)) dir.create(loc)
   fname <- file.path(loc, 'data.csv')
   if (file.exists(fname)){
@@ -14,6 +14,5 @@
 }
 
 .onUnload <- function(libname, pkgname){
-  loc <- rappdirs::user_data_dir('snippie')
   write.csv(.pkgenv[['d']], file.path(loc, 'data.csv'), na='', row.names=F)
 }
