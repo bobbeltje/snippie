@@ -8,7 +8,7 @@ loc <- rappdirs::user_data_dir('snippie')
   if (file.exists(fname)){
     d <- read.csv(fname)
   }else{
-    d <- data.frame(topic='', package='', name='', stringsAsFactors=F)[-1, ]
+    d <- data.frame(Id='', Name='', Packages='', Tags='', stringsAsFactors=F)[-1, ]
   }
   assign(x='d', value=d, envir=.pkgenv)
 }

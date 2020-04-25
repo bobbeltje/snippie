@@ -1,4 +1,26 @@
 
+#' Extract section info from snippet
+#'
+#' @param fname File name of snippet
+#' @param type The section
+#' @param filter_comments Bool
+#'
+#' @return The information as character vector
+#'
+#' @examples
+extract_info <- function(fname, type, filter_comments=FALSE){
+  x <- readLines(fname)
+  x <- x[!grepl('^[[:space:]]*$', x)]
+  i <- grep(paste0('^# ', type, ' ####$'), x)
+  sections <- grep('^#.*####$', x)
+  sections <- sections[sections > i][[1]]
+  x <- x[(i+1L):(sections-1L)]
+  if (filter_comments){
+    x <- grep('^#', x, value=T, invert=T)
+  }
+  return(x)
+}
+
 #' Filename for new snip
 #'
 #' Create filename to save a new snip
@@ -14,6 +36,12 @@ get_filename <- function(n=10L){
   fname <- paste0('snip_', x, '.R')
   if (file.exists(fname)) return(get_filename(n - 1L))
   return(fname)
+}
+
+get_id <- function(x){
+  x <- basename(x)
+  x <- sub('.R', '', sub('snip_', '', x))
+  return(x)
 }
 
 #' Create a skeleton for your snippet
@@ -38,12 +66,22 @@ snip_create <- function(){
 #' @return
 #' @export
 snip_save <- function(){
-  x <- .pkgenv[['snip']]
+  f_old <- .pkgenv[['snip']]
   # v <- snip_validate(x)
   # if (!v) return(NULL)
-  fname <- get_filename()
-  file.copy(x, file.path(loc, 'snippets', fname))
-  # update_d()
+  f_new <- file.path(loc, 'snippets', get_filename())
+  file.copy(f_old, f_new)
+  update_d(f_new)
   message('Snippet saved!')
   invisible(TRUE)
+}
+
+update_d <- function(x){
+  df <- data.frame(
+    Id=get_id(x),
+    Name=extract_info(x, 'Name'),
+    Packages=paste(extract_info(x, 'Packages'), collapse=', '),
+    Tags=paste(extract_info(x, 'Tags'), collapse=', ')
+  )
+  .pkgenv[['d']] <- rbind(.pkgenv[['d']], df)
 }
