@@ -11,10 +11,18 @@
 extract_info <- function(fname, type, filter_comments=FALSE){
   x <- readLines(fname)
   x <- x[!grepl('^[[:space:]]*$', x)]
+
   i <- grep(paste0('^# ', type, ' ####$'), x)
   sections <- grep('^#.*####$', x)
-  sections <- sections[sections > i][[1]]
-  x <- x[(i+1L):(sections-1L)]
+  if (i == sections[length(sections)]){
+    next_section <- length(x) + 1
+  }else{
+    next_section <- sections[sections > i][[1]]
+  }
+
+  if (i + 1L == next_section) return('')
+
+  x <- x[(i+1L):(next_section-1L)]
   if (filter_comments){
     x <- grep('^#', x, value=T, invert=T)
   }
@@ -76,6 +84,13 @@ snip_save <- function(){
   invisible(TRUE)
 }
 
+#' Update data.frame with available snippets
+#'
+#' @param x Filename where latest snip got saved
+#'
+#' @return invisible(TRUE) when successful
+#'
+#' @examples
 update_d <- function(x){
   df <- data.frame(
     Id=get_id(x),
@@ -84,4 +99,5 @@ update_d <- function(x){
     Tags=paste(extract_info(x, 'Tags'), collapse=', ')
   )
   .pkgenv[['d']] <- rbind(.pkgenv[['d']], df)
+  invisible(TRUE)
 }
