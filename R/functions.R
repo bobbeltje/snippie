@@ -7,7 +7,6 @@
 #'
 #' @return The information as character vector
 #'
-#' @examples
 extract_info <- function(fname, type, filter_comments=FALSE){
   x <- readLines(fname)
   x <- x[!grepl('^[[:space:]]*$', x)]
@@ -46,6 +45,11 @@ get_filename <- function(n=10L){
   return(fname)
 }
 
+#' Get the snip id from location
+#'
+#' @param x Character string with snip location or snip name
+#'
+#' @return The id as character
 get_id <- function(x){
   x <- basename(x)
   x <- sub('.R', '', sub('snip_', '', x))
@@ -84,13 +88,35 @@ snip_save <- function(){
   invisible(TRUE)
 }
 
+#' View available snips
+#'
+#' Without arguments, all snippets are shown. Select a subset using ...
+#'
+#' @param ... Subset on any of the columns, eg, snip_view(Package=data.table, Tags=column)
+#'
+#' @return The snippets as data.frame
+#' @export
+#'
+#' @examples snip_view(Package=data.table, Tags=column); snip_view(p=plotly)
+snip_view <- function(exact=F, ...){
+  f <- if (exact) grepl else agrepl
+  d <- .pkgenv[['d']]
+  l <- as.list(substitute(...()))
+  for (i in names(l)){
+    col <- grep(toupper(i), substr(colnames(d), 1, 1))
+    if (length(col) != 1L) next
+    col <- colnames(d)[col]
+    d <- d[f(l[[i]], d[[col]]), ]
+  }
+  return(d)
+}
+
 #' Update data.frame with available snippets
 #'
 #' @param x Filename where latest snip got saved
 #'
 #' @return invisible(TRUE) when successful
 #'
-#' @examples
 update_d <- function(x){
   df <- data.frame(
     Id=get_id(x),

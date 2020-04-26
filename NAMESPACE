@@ -2,3 +2,4 @@
 
 export(snip_create)
 export(snip_save)
+export(snip_view)
