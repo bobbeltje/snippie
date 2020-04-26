@@ -74,6 +74,10 @@ get_id <- function(x){
   return(x)
 }
 
+make_fname <- function(id){
+  file.path(loc, 'snippets', paste0('snip_', id, '.R'))
+}
+
 #' Create a skeleton for your snippet
 #'
 #' This will create a temporary file to create a snippet.
@@ -140,6 +144,13 @@ snip_fix <- function(){
   })
   d <- do.call(rbind, l)
   .pkgenv[['d']] <- d
+}
+
+#' Run snippie interactively
+#'
+#' @export
+snip_interactive <- function(){
+  shiny::shinyApp(ui=ui(), server=server)
 }
 
 #' Save snippet
