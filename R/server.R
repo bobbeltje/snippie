@@ -1,7 +1,12 @@
 
 server <- function(input, output, session){
-  rv <- reactiveValues()
-  d <- .pkgenv[['d']]
+
+  rv <- reactiveValues(
+    d=.pkgenv[['d']]
+  )
+
+
+  # CREATE ####
 
   observeEvent(input$create, {
     showModal(modalDialog(
@@ -13,8 +18,16 @@ server <- function(input, output, session){
       fluidRow(column(
         width=12,
         uiOutput('modal_body')
-      ))
+      )),
+      footer=tagList(
+        actionButton('create_cancel', 'Cancel'),
+        actionButton('create_save', 'Save')
+      )
     ))
+  })
+
+  output$modal_body <- renderUI({
+    get_modal_page(rv)
   })
 
   observeEvent(input$modal_left, {
@@ -39,16 +52,56 @@ server <- function(input, output, session){
     }
   })
 
-  output$modal_body <- renderUI({
-    get_modal_page(rv)
+  observeEvent(input$create_cancel, {
+    rv$snip <- NULL
+    removeModal()
   })
 
-  output$tbl <- renderDataTable({
-    datatable(d, selection='single')
+  observeEvent(input$create_save, {
+    update_snip_info(rv, input)
+    id <- get_id(get_filename())
+    snip <- c(
+      '# Id ####',
+      id,
+      '# Name ####',
+      rv$snip$name,
+      '# Tags ####',
+      rv$snip$tags,
+      '# Description ####',
+      rv$snip$desc,
+      '# Packages ####',
+      rv$snip$pkgs,
+      c(sapply(
+        grep('item_', names(rv$snip), value=T),
+        function(x){
+          c(
+            paste('# Item', sub('item_', '', x), '####'),
+            rv$snip[[x]]
+          )
+        }
+      ))
+    )
+    fname <- make_fname(id)
+    writeLines(snip, fname)
+    update_d(fname)
+    rv$d <- .pkgenv[['d']]
+    rv$snip <- NULL
+    removeModal()
   })
+
+
+  # VIEW ####
+
+  output$tbl <- renderDataTable({
+    datatable(rv$d, selection='single')
+  })
+
+
+  # DETAILS ####
 
   output$out <- renderUI({
     if (is.null(input$tbl_rows_selected)) return(NULL)
+    d <- rv$d
     id <- d$Id[input$tbl_rows_selected]
     x <- extract_info(make_fname(id), 'Item 1', filter_comments=F)
     HTML(paste('<pre>', paste(x, collapse='<br>'), '</pre>'))
