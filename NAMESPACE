@@ -2,5 +2,6 @@
 
 export(snip_create)
 export(snip_delete)
+export(snip_fix)
 export(snip_save)
 export(snip_view)

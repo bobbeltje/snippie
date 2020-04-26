@@ -23,7 +23,7 @@ add_id <- function(fname){
 #'
 #' @return The information as character vector
 #'
-extract_info <- function(fname, type, filter_comments=FALSE){
+extract_info <- function(fname, type, filter_comments=TRUE){
   x <- readLines(fname)
   x <- x[!grepl('^[[:space:]]*$', x)]
 
@@ -120,6 +120,26 @@ snip_delete <- function(i=NULL, Id=NULL){
   unlink(file.path(loc, 'snippets', paste0('snip_', Id, '.R')))
   message('Snippet deleted')
   return(Id)
+}
+
+#' Attempt to fix snippie by reloading snippet information
+#'
+#' @return
+#' @export
+#'
+#' @examples snip_fix()
+snip_fix <- function(){
+  files <- dir(file.path(loc, 'snippets'), full.names=T)
+  l <- lapply(files, function(x){
+    data.frame(
+      Id=extract_info(x, 'Id'),
+      Name=extract_info(x, 'Name'),
+      Packages=paste(extract_info(x, 'Packages'), collapse=', '),
+      Tags=paste(extract_info(x, 'Tags'), collapse=', ')
+    )
+  })
+  d <- do.call(rbind, l)
+  .pkgenv[['d']] <- d
 }
 
 #' Save snippet
