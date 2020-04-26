@@ -76,8 +76,8 @@ get_id <- function(x){
 
 #' Create a skeleton for your snippet
 #'
-#' This will create a temporary file to create a snippet
-#' Once done, save it with snip_save()
+#' This will create a temporary file to create a snippet.
+#' Once done, save it with snip_save().
 #'
 #' @param snip_id If NULL then new snip, else edit snippet identified by snip_id
 #'
@@ -96,9 +96,35 @@ snip_create <- function(snip_id=NULL){
   invisible(TRUE)
 }
 
+#' Delete a snippet
+#'
+#' Use either the snippet Id or its row number from snip_view to select the snippet to delete.
+#'
+#' @param i The row number as indicated by snip_view()
+#' @param Id The snippet's Id
+#'
+#' @return
+#' @export
+#'
+#' @examples snip_delete(i=1)
+#' snip_delete(Id=7059297)
+snip_delete <- function(i=NULL, Id=NULL){
+  if (is.null(i) && is.null(Id)) stop('Specify i (the row index from snip_view) or Id')
+  if (!is.null(i) && !is.null(Id)) stop('Specify snippet with either i or Id')
+  d <- .pkgenv[['d']]
+  if (!is.null(i)){
+    Id <- d$Id[i]
+  }
+  d <- d[d$Id != Id, ]
+  .pkgenv[['d']] <- d
+  unlink(file.path(loc, 'snippets', paste0('snip_', Id, '.R')))
+  message('Snippet deleted')
+  return(Id)
+}
+
 #' Save snippet
 #'
-#' This will save the latest opened snippet
+#' This will save the latest opened snippet.
 #'
 #' @return
 #' @export
@@ -126,7 +152,9 @@ snip_save <- function(){
 #' @return The snippets as data.frame
 #' @export
 #'
-#' @examples snip_view(Package=data.table, Tags=column); snip_view(p=plotly)
+#' @examples
+#' snip_view(Package=data.table, Tags=column)
+#' snip_view(p=plotly)
 snip_view <- function(n, exact=F, ...){
   if (!missing(n)){
     snip_create(.pkgenv[['d']]$Id[n])
