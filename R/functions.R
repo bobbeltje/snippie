@@ -61,13 +61,20 @@ get_id <- function(x){
 #' This will create a temporary file to create a snippet
 #' Once done, save it with snip_save()
 #'
+#' @param snip_id If NULL then new snip, else edit snippet identified by snip_id
+#'
 #' @return
 #' @export
-snip_create <- function(){
-  loc <- tempfile('snip', fileext='.R')
-  .pkgenv[['snip']] <- loc
-  file.copy(system.file('templates/snip_skeleton.R', package='snippie'), loc)
-  file.edit(loc)
+snip_create <- function(snip_id=NULL){
+  if (is.null(snip_id)){
+    src <- system.file('templates/snip_skeleton.R', package='snippie')
+  }else{
+    src <- file.path(loc, 'snippets', paste0('snip_', snip_id, '.R'))
+  }
+  dst <- tempfile('snip', fileext='.R')
+  .pkgenv[['snip']] <- dst
+  file.copy(src, dst)
+  file.edit(dst)
   invisible(TRUE)
 }
 
@@ -93,17 +100,24 @@ snip_save <- function(){
 #' Without arguments, all snippets are shown. Select a subset using ...
 #'
 #' @param ... Subset on any of the columns, eg, snip_view(Package=data.table, Tags=column)
+#' @param n Can be used to view and edit all information regarding a specific snippet.
+#' n refers to the row.number returned by snip_view()
+#' @param exact How precise the subsetting should be. Exact==TRUE is not fully exact (yet).
 #'
 #' @return The snippets as data.frame
 #' @export
 #'
 #' @examples snip_view(Package=data.table, Tags=column); snip_view(p=plotly)
-snip_view <- function(exact=F, ...){
+snip_view <- function(n, exact=F, ...){
+  if (!missing(n)){
+    snip_create(.pkgenv[['d']]$Id[n])
+    return(invisible())
+  }
   f <- if (exact) grepl else agrepl
   d <- .pkgenv[['d']]
   l <- as.list(substitute(...()))
   for (i in names(l)){
-    col <- grep(toupper(i), substr(colnames(d), 1, 1))
+    col <- grep(toupper(substring(i, 1, 1)), substr(colnames(d), 1, 1))
     if (length(col) != 1L) next
     col <- colnames(d)[col]
     d <- d[f(l[[i]], d[[col]]), ]
