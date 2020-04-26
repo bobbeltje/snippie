@@ -3,6 +3,8 @@
 loc <- rappdirs::user_data_dir('snippie')
 
 .onLoad <- function(libname, pkgname){
+  library(shiny)
+  library(DT)
   if (!dir.exists(loc)) dir.create(loc)
   fname <- file.path(loc, 'data.csv')
   if (file.exists(fname)){
