@@ -1,4 +1,20 @@
 
+#' Add an Id to the snippet
+#'
+#' @param fname File location
+#'
+#' @return Id of the file (either the one already present, or a new one)
+add_id <- function(fname){
+  id <- extract_info(fname, 'Id', filter_comments=T)
+  if (id == ''){
+    id <- get_id(get_filename())
+    x <- readLines(fname)
+    x <- c('# Id ####', id, x)
+    writeLines(x, fname)
+  }
+  return(id)
+}
+
 #' Extract section info from snippet
 #'
 #' @param fname File name of snippet
@@ -12,6 +28,8 @@ extract_info <- function(fname, type, filter_comments=FALSE){
   x <- x[!grepl('^[[:space:]]*$', x)]
 
   i <- grep(paste0('^# ', type, ' ####$'), x)
+  if (length(i) != 1L) return('')
+
   sections <- grep('^#.*####$', x)
   if (i == sections[length(sections)]){
     next_section <- length(x) + 1
@@ -88,7 +106,8 @@ snip_save <- function(){
   f_old <- .pkgenv[['snip']]
   # v <- snip_validate(x)
   # if (!v) return(NULL)
-  f_new <- file.path(loc, 'snippets', get_filename())
+  id <- add_id(f_old)
+  f_new <- file.path(loc, 'snippets', paste0('snip_', id, '.R'))
   file.copy(f_old, f_new)
   update_d(f_new)
   message('Snippet saved!')
@@ -132,12 +151,23 @@ snip_view <- function(n, exact=F, ...){
 #' @return invisible(TRUE) when successful
 #'
 update_d <- function(x){
-  df <- data.frame(
-    Id=get_id(x),
-    Name=extract_info(x, 'Name'),
-    Packages=paste(extract_info(x, 'Packages'), collapse=', '),
-    Tags=paste(extract_info(x, 'Tags'), collapse=', ')
-  )
-  .pkgenv[['d']] <- rbind(.pkgenv[['d']], df)
+  id <- get_id(x)
+  d <- .pkgenv[['d']]
+  if (id %in% d$Id){
+    d[d$Id == id, c('Name', 'Packages', 'Tags')] <- c(
+      extract_info(x, 'Name'),
+      paste(extract_info(x, 'Packages'), collapse=', '),
+      paste(extract_info(x, 'Tags'), collapse=', ')
+    )
+    .pkgenv[['d']] <- d
+  }else{
+    df <- data.frame(
+      Id=id,
+      Name=extract_info(x, 'Name'),
+      Packages=paste(extract_info(x, 'Packages'), collapse=', '),
+      Tags=paste(extract_info(x, 'Tags'), collapse=', ')
+    )
+    .pkgenv[['d']] <- rbind(.pkgenv[['d']], df)
+  }
   invisible(TRUE)
 }
