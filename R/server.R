@@ -60,17 +60,12 @@ server <- function(input, output, session){
   observeEvent(input$create_save, {
     update_snip_info(rv, input)
     id <- get_id(get_filename())
-    snip <- c(
-      '# Id ####',
-      id,
-      '# Name ####',
-      rv$snip$name,
-      '# Tags ####',
-      rv$snip$tags,
-      '# Description ####',
-      rv$snip$desc,
-      '# Packages ####',
-      rv$snip$pkgs,
+    snip <- unlist(c(
+      '# Id ####', id,
+      '# Name ####', rv$snip$name,
+      '# Tags ####', rv$snip$tags,
+      '# Description ####', rv$snip$desc,
+      '# Packages ####', rv$snip$pkgs,
       c(sapply(
         grep('item_', names(rv$snip), value=T),
         function(x){
@@ -80,7 +75,7 @@ server <- function(input, output, session){
           )
         }
       ))
-    )
+    ))
     fname <- make_fname(id)
     writeLines(snip, fname)
     update_d(fname)

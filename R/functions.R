@@ -132,9 +132,16 @@ snip_delete <- function(i=NULL, Id=NULL){
 #' @export
 #'
 #' @examples snip_fix()
-snip_fix <- function(){
+snip_fix <- function(play_it_safe=TRUE){
   files <- dir(file.path(loc, 'snippets'), full.names=T)
+  zip(file.path(loc, 'backup.zip'))
   l <- lapply(files, function(x){
+    # deleting invalid files
+    if (!isTRUE(validate_snip(x))){
+      unlink(x)
+      return(NULL)
+    }
+    add_id(x)
     data.frame(
       Id=extract_info(x, 'Id'),
       Name=extract_info(x, 'Name'),
@@ -161,11 +168,14 @@ snip_interactive <- function(){
 #' @export
 snip_save <- function(){
   f_old <- .pkgenv[['snip']]
-  # v <- snip_validate(x)
-  # if (!v) return(NULL)
+
+  v <- snip_validate(f_old)
+  if (!v) return(NULL)
+
   id <- add_id(f_old)
   f_new <- file.path(loc, 'snippets', paste0('snip_', id, '.R'))
   file.copy(f_old, f_new)
+
   update_d(f_new)
   message('Snippet saved!')
   invisible(TRUE)
@@ -230,3 +240,31 @@ update_d <- function(x){
   }
   invisible(TRUE)
 }
+
+#' Validate snippet before saving
+#'
+#' @param fname Location of snippet
+#'
+#' @return TRUE if successful, otherwise it calls stop
+validate_snip <- function(fname){
+  # fname <- snippie:::.pkgenv$snip
+  x <- c('Name', 'Tags', 'Description', 'Packages')
+  l <- sapply(x, extract_info, fname=fname, simplify=F, USE.NAMES=T)
+  if (typeof(l$Name) != 'character' || length(l$Name) != 1 || nchar(l$Name) < 1){
+    return('Invalid Name')
+  }
+  if (typeof(l$Tags) != 'character'){
+    return('Invalid Tags')
+    if (length(l$Tags) > 10) return('Too Many Tags (maximum allowed: 10)')
+  }
+  if (typeof(l$Description) != 'character'){
+    return('Invalid Description')
+    if (length(l$Description) > 10) return('Too Long Description (maximum lines allowed: 10)')
+  }
+  if (typeof(l$Packages) != 'character'){
+    return('Invalid Packages')
+    if (length(l$Packages) > 10) return('Too Many Packages (maximum allowed: 10)')
+  }
+  return(invisible(TRUE))
+}
+
