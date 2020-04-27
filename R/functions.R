@@ -5,12 +5,12 @@
 #'
 #' @return Id of the file (either the one already present, or a new one)
 add_id <- function(fname){
-  id <- extract_info(fname, 'Id', filter_comments=T)
+  snip <- readLines(fname)
+  id <- extract_info(snip, 'Id', filter_comments=T)
   if (id == ''){
     id <- get_id(get_filename())
-    x <- readLines(fname)
-    x <- c('# Id ####', id, x)
-    writeLines(x, fname)
+    snip <- c('# Id ####', id, snip)
+    writeLines(snip, fname)
   }
   return(id)
 }
@@ -23,23 +23,22 @@ add_id <- function(fname){
 #'
 #' @return The information as character vector
 #'
-extract_info <- function(fname, type, filter_comments=TRUE){
-  x <- readLines(fname)
-  x <- x[!grepl('^[[:space:]]*$', x)]
+extract_info <- function(snip, type, filter_comments=TRUE){
+  snip <- snip[!grepl('^[[:space:]]*$', snip)]
 
-  i <- grep(paste0('^# ', type, ' ####$'), x)
+  i <- grep(paste0('^# ', type, ' ####$'), snip)
   if (length(i) != 1L) return('')
 
-  sections <- grep('^#.*####$', x)
+  sections <- grep('^#.*####$', snip)
   if (i == sections[length(sections)]){
-    next_section <- length(x) + 1
+    next_section <- length(snip) + 1
   }else{
     next_section <- sections[sections > i][[1]]
   }
 
   if (i + 1L == next_section) return('')
 
-  x <- x[(i+1L):(next_section-1L)]
+  x <- snip[(i+1L):(next_section-1L)]
   if (filter_comments){
     x <- grep('^#', x, value=T, invert=T)
   }
@@ -135,18 +134,19 @@ snip_delete <- function(i=NULL, Id=NULL){
 snip_fix <- function(play_it_safe=TRUE){
   files <- dir(file.path(loc, 'snippets'), full.names=T)
   zip(file.path(loc, 'backup.zip'))
-  l <- lapply(files, function(x){
+  l <- lapply(files, function(fname){
     # deleting invalid files
-    if (!isTRUE(validate_snip(x))){
+    if (!isTRUE(validate_snip(fname))){
       unlink(x)
       return(NULL)
     }
-    add_id(x)
+    add_id(fname)
+    snip <- readLines(fname)
     data.frame(
-      Id=extract_info(x, 'Id'),
-      Name=extract_info(x, 'Name'),
-      Packages=paste(extract_info(x, 'Packages'), collapse=', '),
-      Tags=paste(extract_info(x, 'Tags'), collapse=', ')
+      Id=extract_info(snip, 'Id'),
+      Name=extract_info(snip, 'Name'),
+      Packages=paste(extract_info(snip, 'Packages'), collapse=', '),
+      Tags=paste(extract_info(snip, 'Tags'), collapse=', ')
     )
   })
   d <- do.call(rbind, l)
@@ -215,26 +215,27 @@ snip_view <- function(n, exact=F, ...){
 
 #' Update data.frame with available snippets
 #'
-#' @param x Filename where latest snip got saved
+#' @param fname Filename where latest snip got saved
 #'
 #' @return invisible(TRUE) when successful
 #'
-update_d <- function(x){
-  id <- get_id(x)
+update_d <- function(fname){
+  id <- get_id(fname)
+  snip <- readLines(fname)
   d <- .pkgenv[['d']]
   if (id %in% d$Id){
     d[d$Id == id, c('Name', 'Packages', 'Tags')] <- c(
-      extract_info(x, 'Name'),
-      paste(extract_info(x, 'Packages'), collapse=', '),
-      paste(extract_info(x, 'Tags'), collapse=', ')
+      extract_info(snip, 'Name'),
+      paste(extract_info(snip, 'Packages'), collapse=', '),
+      paste(extract_info(snip, 'Tags'), collapse=', ')
     )
     .pkgenv[['d']] <- d
   }else{
     df <- data.frame(
       Id=id,
-      Name=extract_info(x, 'Name'),
-      Packages=paste(extract_info(x, 'Packages'), collapse=', '),
-      Tags=paste(extract_info(x, 'Tags'), collapse=', ')
+      Name=extract_info(snip, 'Name'),
+      Packages=paste(extract_info(snip, 'Packages'), collapse=', '),
+      Tags=paste(extract_info(snip, 'Tags'), collapse=', ')
     )
     .pkgenv[['d']] <- rbind(.pkgenv[['d']], df)
   }
