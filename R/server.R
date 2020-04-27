@@ -98,7 +98,8 @@ server <- function(input, output, session){
     if (is.null(input$tbl_rows_selected)) return(NULL)
     d <- rv$d
     id <- d$Id[input$tbl_rows_selected]
-    x <- extract_info(make_fname(id), 'Item 1', filter_comments=F)
+    snip <- readLines(make_fname(id))
+    x <- extract_info(snip, 'Item 1', filter_comments=F)
     HTML(paste('<pre>', paste(x, collapse='<br>'), '</pre>'))
   })
 }

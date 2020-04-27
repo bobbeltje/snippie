@@ -17,8 +17,8 @@ add_id <- function(fname){
 
 #' Extract section info from snippet
 #'
-#' @param fname File name of snippet
-#' @param type The section
+#' @param snip A snippet
+#' @param type Section to extract (Name, Tags, Description, Packages, etc)
 #' @param filter_comments Bool
 #'
 #' @return The information as character vector
@@ -49,6 +49,8 @@ extract_info <- function(snip, type, filter_comments=TRUE){
 #'
 #' Create filename to save a new snip
 #'
+#' @param n Recursive counter
+#'
 #' @return path_to_file
 get_filename <- function(n=10L){
   if (n < 1){
@@ -64,15 +66,20 @@ get_filename <- function(n=10L){
 
 #' Get the snip id from location
 #'
-#' @param x Character string with snip location or snip name
+#' @param fname Character string with snip location or snip name
 #'
 #' @return The id as character
-get_id <- function(x){
-  x <- basename(x)
-  x <- sub('.R', '', sub('snip_', '', x))
-  return(x)
+get_id <- function(fname){
+  fname <- basename(fname)
+  fname <- sub('.R', '', sub('snip_', '', fname))
+  return(fname)
 }
 
+#' Create full path to file (in saved snippets folder) given an id
+#'
+#' @param id Id of a snippet
+#'
+#' @return File path for snippet
 make_fname <- function(id){
   file.path(loc, 'snippets', paste0('snip_', id, '.R'))
 }
@@ -127,13 +134,15 @@ snip_delete <- function(i=NULL, Id=NULL){
 
 #' Attempt to fix snippie by reloading snippet information
 #'
-#' @return
+#' @param play_it_safe Bool, if TRUE (default) creates a zip of all saved snippets
+#'
+#' @return data.table of available snippets
 #' @export
 #'
 #' @examples snip_fix()
 snip_fix <- function(play_it_safe=TRUE){
   files <- dir(file.path(loc, 'snippets'), full.names=T)
-  zip(file.path(loc, 'backup.zip'))
+  zip(file.path(loc, 'backup.zip'), files)
   l <- lapply(files, function(fname){
     # deleting invalid files
     if (!isTRUE(validate_snip(fname))){
@@ -149,8 +158,9 @@ snip_fix <- function(play_it_safe=TRUE){
       Tags=paste(extract_info(snip, 'Tags'), collapse=', ')
     )
   })
-  d <- do.call(rbind, l)
+  d <- data.table::rbindlist(l)
   .pkgenv[['d']] <- d
+  return(invisible(d))
 }
 
 #' Run snippie interactively
@@ -169,7 +179,7 @@ snip_interactive <- function(){
 snip_save <- function(){
   f_old <- .pkgenv[['snip']]
 
-  v <- snip_validate(f_old)
+  v <- validate_snip(f_old)
   if (!v) return(NULL)
 
   id <- add_id(f_old)
@@ -185,12 +195,12 @@ snip_save <- function(){
 #'
 #' Without arguments, all snippets are shown. Select a subset using ...
 #'
-#' @param ... Subset on any of the columns, eg, snip_view(Package=data.table, Tags=column)
 #' @param n Can be used to view and edit all information regarding a specific snippet.
 #' n refers to the row.number returned by snip_view()
 #' @param exact How precise the subsetting should be. Exact==TRUE is not fully exact (yet).
+#' @param ... Subset on any of the columns, eg, snip_view(Package=data.table, Tags=column)
 #'
-#' @return The snippets as data.frame
+#' @return The snippets as data.table
 #' @export
 #'
 #' @examples
@@ -250,7 +260,8 @@ update_d <- function(fname){
 validate_snip <- function(fname){
   # fname <- snippie:::.pkgenv$snip
   x <- c('Name', 'Tags', 'Description', 'Packages')
-  l <- sapply(x, extract_info, fname=fname, simplify=F, USE.NAMES=T)
+  snip <- readLines(fname)
+  l <- sapply(x, extract_info, snip=snip, simplify=F, USE.NAMES=T)
   if (typeof(l$Name) != 'character' || length(l$Name) != 1 || nchar(l$Name) < 1){
     return('Invalid Name')
   }

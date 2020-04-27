@@ -1,4 +1,11 @@
 
+#' Create UI with inputs for current page in modal for creating snippets
+#'
+#' First page is the meta info (Name, Tags, etc). Second to fifth pages are code
+#'
+#' @param rv reactiveValues()
+#'
+#' @return UI for the modal
 get_modal_page <- function(rv){
   if (is.null(rv[['snip']])){
     rv$snip <- list(page=1)
@@ -25,6 +32,15 @@ get_modal_page <- function(rv){
   }
 }
 
+#' Update snippet info in rv
+#'
+#' Whenever the user changes the page inside the modal for creating snippets the info needs to be updated.
+#' Since the code input pages will use the same input bindings.
+#'
+#' @param rv reactiveValues
+#' @param input input
+#'
+#' @return
 update_snip_info <- function(rv, input){
   i <- rv$snip$page
   if (i == 1){
