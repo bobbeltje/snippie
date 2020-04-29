@@ -84,6 +84,15 @@ server <- function(input, output, session){
     removeModal()
   })
 
+  # DELETE ####
+
+  observeEvent(input$delete, {
+    if (is.null(input$tbl_rows_selected)) return(NULL)
+    id <- rv$d$Id[input$tbl_rows_selected]
+    snip_delete(Id=id)
+    rv$d <- snip_view()
+  })
+
 
   # VIEW ####
 
@@ -96,8 +105,8 @@ server <- function(input, output, session){
 
   current_snip <- reactive({
     if (is.null(input$tbl_rows_selected)) return(NULL)
-    d <- rv$d
-    id <- d$Id[input$tbl_rows_selected]
+    id <- rv$d$Id[input$tbl_rows_selected]
+    if (is.na(id)) return(NULL)
     readLines(make_fname(id))
   })
 
