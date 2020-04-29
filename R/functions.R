@@ -15,6 +15,21 @@ add_id <- function(fname){
   return(id)
 }
 
+#' Extract headers from a snippet
+#'
+#' @param snip The snippet
+#' @param code_only If true, only the ones with code
+#'
+#' @return Character vector of headers
+extract_headers <- function(snip, code_only=T){
+  headers <- grep(paste0('^# .* ####$'), snip, value=T)
+  if (code_only) {
+    main <- c("# Id ####", "# Name ####", "# Tags ####", "# Description ####", "# Packages ####")
+    headers <- headers[!headers %in% main]
+  }
+  return(headers)
+}
+
 #' Extract section info from snippet
 #'
 #' @param snip A snippet
@@ -43,6 +58,17 @@ extract_info <- function(snip, type, filter_comments=TRUE){
     x <- grep('^#', x, value=T, invert=T)
   }
   return(x)
+}
+
+#' Extract code section title from string
+#'
+#' Gets rid of leading and trailing pound signs
+#'
+#' @param x Header(s)
+#'
+#' @return Title(s)
+extract_titles <- function(x){
+  sub(' ####$', '', sub('^# ', '', x))
 }
 
 #' Filename for new snip

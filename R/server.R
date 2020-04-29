@@ -94,12 +94,37 @@ server <- function(input, output, session){
 
   # DETAILS ####
 
-  output$out <- renderUI({
+  current_snip <- reactive({
     if (is.null(input$tbl_rows_selected)) return(NULL)
     d <- rv$d
     id <- d$Id[input$tbl_rows_selected]
-    snip <- readLines(make_fname(id))
-    x <- extract_info(snip, 'Item 1', filter_comments=F)
-    HTML(paste('<pre>', paste(x, collapse='<br>'), '</pre>'))
+    readLines(make_fname(id))
+  })
+
+  observeEvent(input$left, {
+    req(current_snip())
+    i <- if (is.null(rv$snip_idx)) 1 else rv$snip_idx
+    i <- i - 1
+    if (i == 0) i <- length(extract_headers(current_snip()))
+    rv$snip_idx <- i
+  })
+
+  observeEvent(input$right, {
+    req(current_snip())
+    i <- if (is.null(rv$snip_idx)) 1 else rv$snip_idx
+    i <- i + 1
+    if (i > length(extract_headers(current_snip()))) i <- 1
+    rv$snip_idx <- i
+  })
+
+  output$out <- renderUI({
+    req(current_snip())
+    snip <- current_snip()
+    headers <-
+      extract_headers(snip, code_only=TRUE) %>%
+      extract_titles()
+    i <- if (is.null(rv$snip_idx) || rv$snip_idx > length(headers)) 1L else rv$snip_idx
+    x <- extract_info(snip, headers[i], filter_comments=F)
+    HTML(paste0('<pre>', paste(x, collapse='<br>'), '</pre>'))
   })
 }
