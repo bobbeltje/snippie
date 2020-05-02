@@ -97,7 +97,7 @@ server <- function(input, output, session){
   # VIEW ####
 
   output$tbl <- renderDataTable({
-    datatable(rv$d, selection='single')
+    datatable(rv$d, selection='single', filter='top')
   })
 
 
