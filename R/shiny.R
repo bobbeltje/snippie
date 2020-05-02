@@ -25,10 +25,13 @@ get_modal_page <- function(rv){
     ))
   }else{
     i <- rv$snip$page - 1
-    return(tagList(
-      textAreaInput('snipitem', tags$h3(paste('Item', i)),
-                    value=paste(rv$snip[[paste0('item_', i)]], collapse='\n'))
-    ))
+    return(
+      div(
+        id='wide_textarea',
+        textAreaInput('snipitem', tags$h3(paste('Item', i)), rows=20, width='100%',
+                      value=paste(rv$snip[[paste0('item_', i)]], collapse='\n'))
+      )
+    )
   }
 }
 

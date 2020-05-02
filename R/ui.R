@@ -1,6 +1,7 @@
 
 ui <- function(){
   fluidPage(
+    tags$head(tags$style('#wide_textarea * {width: 100%;}')),
     fluidRow(
       column(
         width=12L,
