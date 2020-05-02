@@ -202,7 +202,9 @@ snip_export <- function(path=NULL){
   }
 
   files <- dir(file.path(loc, 'snippets'), full.names=T)
-  zip(file.path(path, 'snippets.zip'), files, flags='-jq')
+  fname <- file.path(path, 'snippets.zip')
+  if (file.exists(fname)) file.remove(fname)
+  zip(fname, files, flags='-jq')
 
   message('Snippets saved in ', path)
 }
@@ -217,7 +219,7 @@ snip_export <- function(path=NULL){
 #' @examples snip_fix()
 snip_fix <- function(play_it_safe=TRUE){
   files <- dir(file.path(loc, 'snippets'), full.names=T)
-  zip(file.path(loc, 'backup.zip'), files)
+  zip(file.path(loc, 'backup.zip'), files, flags='-jqFS')
   l <- lapply(files, function(fname){
     # deleting invalid files
     if (!isTRUE(validate_snip(fname))){
@@ -359,7 +361,6 @@ update_d <- function(fname){
 #' @param fname File name of snippet
 #' @param f Function to apply to the snippet
 #'
-#' @export
 update_snip <- function(fname, f){
   readLines(fname) %>%
     f() %>%

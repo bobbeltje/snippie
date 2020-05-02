@@ -2,7 +2,9 @@
 
 export(snip_create)
 export(snip_delete)
+export(snip_export)
 export(snip_fix)
+export(snip_import)
 export(snip_interactive)
 export(snip_save)
 export(snip_view)
