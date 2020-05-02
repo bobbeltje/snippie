@@ -1,18 +1,16 @@
 
 #' Add an Id to the snippet
 #'
-#' @param fname File location
+#' @param snip The snippet
 #'
 #' @return Id of the file (either the one already present, or a new one)
-add_id <- function(fname){
-  snip <- readLines(fname)
+add_id <- function(snip){
   id <- extract_info(snip, 'Id', filter_comments=T)
   if (id == ''){
     id <- get_id(get_filename())
     snip <- c('# Id ####', id, snip)
-    writeLines(snip, fname)
   }
-  return(id)
+  return(snip)
 }
 
 #' Extract headers from a snippet
@@ -108,6 +106,25 @@ get_id <- function(fname){
 #' @return File path for snippet
 make_fname <- function(id){
   file.path(loc, 'snippets', paste0('snip_', id, '.R'))
+}
+
+#' Remove Id from a snippet
+#'
+#' @param snip The snippet
+#'
+#' @return The snippet minus Id
+remove_id <- function(snip){
+  headers <- extract_headers(snip, code_only=F)
+  if (!'# Id ####' %in% headers) return(snip)
+
+  i <- which(headers == '# Id ####') + 1
+  if (i > length(headers)){
+    snip <- snip[-(which(snip == '# Id ####'):length(snip))]
+  }else{
+    snip <- snip[-(which(snip == '# Id ####') : (which(snip == headers[i]) - 1))]
+  }
+
+  return(snip)
 }
 
 #' Create a skeleton for your snippet
@@ -207,7 +224,7 @@ snip_fix <- function(play_it_safe=TRUE){
       unlink(x)
       return(NULL)
     }
-    add_id(fname)
+    update_snip(fname, add_id)
     snip <- readLines(fname)
     data.frame(
       Id=extract_info(snip, 'Id'),
@@ -219,6 +236,33 @@ snip_fix <- function(play_it_safe=TRUE){
   d <- data.table::rbindlist(l)
   .pkgenv[['d']] <- d
   return(invisible(d))
+}
+
+#' Import snippets from zip file
+#'
+#' @export
+snip_import <- function(){
+  fname <- try(file.choose(), silent=T)
+  if (inherits(fname, 'try-error')) return(NULL)
+
+  path <- file.path(tempdir(), 'new_snippets')
+  unzip(fname, exdir=path)
+
+  files <- dir(path)
+
+  new_files <- files[files %in% dir(loc)]
+  file.rename(file.path(path, new_files), file.path(loc, 'snippets', new_files))
+
+  files <- files[!files %in% new_files]
+  for (fname in files){
+    snip <- readLines(file.path(path, fname))
+    snip <- snip %>%
+      remove_id() %>%
+      add_id()
+    writeLines(snip, make_fname(extract_info(snip, 'Id')))
+    file.remove(file.path(path, fname))
+  }
+  snip_fix()
 }
 
 #' Run snippie interactively
@@ -240,7 +284,7 @@ snip_save <- function(){
   v <- validate_snip(f_old)
   if (!v) return(NULL)
 
-  id <- add_id(f_old)
+  id <- update_snip(f_old, add_id)
   f_new <- file.path(loc, 'snippets', paste0('snip_', id, '.R'))
   file.copy(f_old, f_new)
 
@@ -308,6 +352,18 @@ update_d <- function(fname){
     .pkgenv[['d']] <- rbind(.pkgenv[['d']], df)
   }
   invisible(TRUE)
+}
+
+#' Function wrapper to update snippet
+#'
+#' @param fname File name of snippet
+#' @param f Function to apply to the snippet
+#'
+#' @export
+update_snip <- function(fname, f){
+  readLines(fname) %>%
+    f() %>%
+    writeLines(fname)
 }
 
 #' Validate snippet before saving
