@@ -158,6 +158,38 @@ snip_delete <- function(i=NULL, Id=NULL){
   return(Id)
 }
 
+#' Exports snippets a zip file
+#'
+#'Choose a directory interactively (or specify directly with path argument).
+#'
+#' @param path Path to directory. Leave empty to choose one interactively.
+#'
+#' @export
+snip_export <- function(path=NULL){
+
+  if (is.null(path)){
+    caption <- 'Select directory to save the snippets'
+    if (exists('tk_choose.dir', where=asNamespace('utils'), mode='function')) {
+      path <- utils::choose.dir(caption = caption)
+    } else if (exists('selectDirectory', where=asNamespace('rstudioapi'), mode='function')) {
+      path <- rstudioapi::selectDirectory(caption = caption)
+    } else if (exists('tk_choose.dir', where=asNamespace('tcltk'), mode='function')) {
+      path <- tcltk::tk_choose.dir(caption = caption)
+    }else{
+      path <- '~'
+    }
+  }
+
+  if (is.null(path) || is.na(path)){
+    stop('Unable to save snippets; path not valid')
+  }
+
+  files <- dir(file.path(loc, 'snippets'), full.names=T)
+  zip(file.path(path, 'snippets.zip'), files, flags='-jq')
+
+  message('Snippets saved in ', path)
+}
+
 #' Attempt to fix snippie by reloading snippet information
 #'
 #' @param play_it_safe Bool, if TRUE (default) creates a zip of all saved snippets
