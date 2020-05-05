@@ -13,6 +13,20 @@ add_id <- function(snip){
   return(snip)
 }
 
+#' Add a section to a snip
+#'
+#' The function does not verify if the section exists already
+#'
+#' @param snip A snippet
+#' @param section Section header
+#' @param x Content
+#'
+#' @return An updated snippet
+add_section <- function(snip, section, x){
+  snip <- c(paste('#', section, '####'), x, snip)
+  return(snip)
+}
+
 #' Extract headers from a snippet
 #'
 #' @param snip The snippet
@@ -99,6 +113,24 @@ get_id <- function(fname){
   return(fname)
 }
 
+#' Interactively get a path to folder
+#'
+#' @param caption Window caption
+#'
+#' @return Path
+get_path_to_folder <- function(caption){
+  if (exists('tk_choose.dir', where=asNamespace('utils'), mode='function')) {
+    path <- utils::choose.dir(caption = caption)
+  } else if (exists('selectDirectory', where=asNamespace('rstudioapi'), mode='function')) {
+    path <- rstudioapi::selectDirectory(caption = caption)
+  } else if (exists('tk_choose.dir', where=asNamespace('tcltk'), mode='function')) {
+    path <- tcltk::tk_choose.dir(caption = caption)
+  }else{
+    path <- '~'
+  }
+  return(path)
+}
+
 #' Create full path to file (in saved snippets folder) given an id
 #'
 #' @param id Id of a snippet
@@ -177,36 +209,22 @@ snip_delete <- function(i=NULL, Id=NULL){
 
 #' Exports snippets a zip file
 #'
-#'Choose a directory interactively (or specify directly with path argument).
+#' Choose a directory interactively (or specify directly with path argument).
 #'
 #' @param path Path to directory. Leave empty to choose one interactively.
 #'
 #' @export
 snip_export <- function(path=NULL){
 
-  if (is.null(path)){
-    caption <- 'Select directory to save the snippets'
-    if (exists('tk_choose.dir', where=asNamespace('utils'), mode='function')) {
-      path <- utils::choose.dir(caption = caption)
-    } else if (exists('selectDirectory', where=asNamespace('rstudioapi'), mode='function')) {
-      path <- rstudioapi::selectDirectory(caption = caption)
-    } else if (exists('tk_choose.dir', where=asNamespace('tcltk'), mode='function')) {
-      path <- tcltk::tk_choose.dir(caption = caption)
-    }else{
-      path <- '~'
-    }
-  }
-
-  if (is.null(path) || is.na(path)){
-    stop('Unable to save snippets; path not valid')
-  }
+  if (is.null(path)) path <- get_path_to_folder('Select directory to save the snippets')
+  if (is.null(path) || is.na(path)) stop('Unable to save snippets; path not valid')
 
   files <- dir(file.path(loc, 'snippets'), full.names=T)
   fname <- file.path(path, 'snippets.zip')
   if (file.exists(fname)) file.remove(fname)
-  zip(fname, files, flags='-jq')
+  zip(fname, files, flags='-jqFS')
 
-  message('Snippets saved in ', path)
+  message('snippets.zip saved in ', path)
 }
 
 #' Attempt to fix snippie by reloading snippet information
@@ -223,7 +241,7 @@ snip_fix <- function(play_it_safe=TRUE){
   l <- lapply(files, function(fname){
     # deleting invalid files
     if (!isTRUE(validate_snip(fname))){
-      unlink(x)
+      unlink(fname)
       return(NULL)
     }
     update_snip(fname, add_id)
@@ -240,12 +258,49 @@ snip_fix <- function(play_it_safe=TRUE){
   return(invisible(d))
 }
 
+#' Select a folder full op undocumented snippets to add to the snippie library
+#'
+#' All files in a folder can be added to snippie in one go.
+#' snippie will use the file name as Title and add an Id.
+#'
+#' @param path Path to directory. Leave empty to choose one interactively.
+#' @param recursive Boolean
+#' @param extensions A character vector of extensions, eg c('py', 'R', 'txt')
+#'
+#' @return
+#' @export
+#'
+#' @examples snip_folder(recursive=TRUE, extensions=c('txt', 'R'))
+snip_folder <- function(path=NULL, recursive=TRUE, extensions=NULL){
+
+  if (is.null(path)) path <- get_path_to_folder('Select folder with undocumented snippets')
+  if (is.null(path) || is.na(path)) stop('Unable to save snippets; path not valid')
+
+  if (is.null(extensions)){
+    pattern <- NULL
+  }else{
+    pattern <- paste0('.', extensions, '$')
+  }
+  files <- dir(path, pattern=pattern, full.names=T, recursive=recursive)
+
+  for (fname in files){
+    readLines(fname) %>%
+      add_section('Item 1', '') %>%
+      add_section('Packages', '') %>%
+      add_section('Description', '') %>%
+      add_section('Tags', '') %>%
+      add_section('Name', sub("(.*)\\..*$", "\\1", basename(fname))) %>%
+      add_id() %>%
+      writeLines(., make_fname(extract_info(., 'Id')))
+  }
+}
+
 #' Import snippets from zip file
 #'
 #' @export
 snip_import <- function(){
   fname <- try(file.choose(), silent=T)
-  if (inherits(fname, 'try-error')) return(NULL)
+  if (inherits(fname, 'try-error')) return(invsible(NULL))
 
   path <- file.path(tempdir(), 'new_snippets')
   unzip(fname, exdir=path)
