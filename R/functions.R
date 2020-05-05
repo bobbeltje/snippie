@@ -196,11 +196,22 @@ snip_create <- function(snip_id=NULL){
 snip_delete <- function(i=NULL, Id=NULL){
   if (is.null(i) && is.null(Id)) stop('Specify i (the row index from snip_view) or Id')
   if (!is.null(i) && !is.null(Id)) stop('Specify snippet with either i or Id')
+
   d <- .pkgenv[['d']]
   if (!is.null(i)){
     Id <- d$Id[i]
   }
   d <- d[d$Id != Id, ]
+
+  # solution 0: use which?
+  # solution 1: use a different variable
+  # x <- Id
+  # d <- d[Id != x]
+  # solution 2: eval one variable in parent frame
+  # d <- d[Id != evalq(Id, envir=sys.parent(2))]
+  # solution 3:
+  # d <- d[eval(d[, Id %in% ..Id])]
+
   .pkgenv[['d']] <- d
   unlink(file.path(loc, 'snippets', paste0('snip_', Id, '.R')))
   message('Snippet deleted')
@@ -254,6 +265,7 @@ snip_fix <- function(play_it_safe=TRUE){
     )
   })
   d <- data.table::rbindlist(l)
+  # d$Id <- as.integer(as.character(d$Id))
   .pkgenv[['d']] <- d
   return(invisible(d))
 }

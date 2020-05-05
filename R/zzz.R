@@ -10,7 +10,7 @@ loc <- rappdirs::user_data_dir('snippie')
   if (file.exists(fname)){
     d <- data.table::fread(fname)
   }else{
-    d <- data.table::data.table(Id='', Name='', Packages='', Tags='', stringsAsFactors=F)[-1, ]
+    d <- data.table::data.table(Id=0, Name='', Packages='', Tags='')[-1, ]
   }
   assign(x='d', value=d, envir=.pkgenv)
 }

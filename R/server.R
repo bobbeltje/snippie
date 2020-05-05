@@ -89,6 +89,19 @@ server <- function(input, output, session){
   observeEvent(input$delete, {
     if (is.null(input$tbl_rows_selected)) return(NULL)
     id <- rv$d$Id[input$tbl_rows_selected]
+    showModal(modalDialog(
+      tags$h2(paste0('Deleting ', id, ' (', rv$d$Name[input$tbl_rows_selected], ')')),
+      tags$h3('Are you sure?'),
+      footer=tagList(
+        modalButton('cancel'),
+        actionButton('delete_confirm', 'Confirm')
+      )
+    ))
+  })
+
+  observeEvent(input$delete_confirm, {
+    removeModal()
+    id <- rv$d$Id[input$tbl_rows_selected]
     snip_delete(Id=id)
     rv$d <- snip_view()
   })

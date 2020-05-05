@@ -1,12 +1,15 @@
 
 ui <- function(){
   fluidPage(
-    tags$head(tags$style('#wide_textarea * {width: 100%;}')),
+    tags$head(tags$style('#wide_textarea * {width: 100%;}', 'body {background-color: #dcedff;}')),
+    tags$h1('Snippie'),
     fluidRow(
       column(
-        width=12L,
-        actionButton('create', 'Create snippet'),
-        actionButton('delete', 'Delete snippet')
+        width=12L, style='margin-bottom: 5px;',
+        actionButton('create', 'Create snippet', class='btn-success'),
+        actionButton('edit', 'Edit snippet', class='btn-warning'),
+        actionButton('delete', 'Delete snippet', class='btn-danger'),
+        actionButton('load', 'Load snippets', class='btn-primary')
       )
     ),
     fluidRow(
@@ -19,8 +22,8 @@ ui <- function(){
         fluidRow(
           column(
             width=12L,
-            actionButton('left', '<'),
-            actionButton('right', '>')
+            actionButton('left', '<', class='btn-info'),
+            actionButton('right', '>', class='btn-info')
           )
         ),
         fluidRow(
