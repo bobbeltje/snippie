@@ -276,6 +276,9 @@ snip_folder <- function(path=NULL, recursive=TRUE, extensions=NULL){
   if (is.null(path)) path <- get_path_to_folder('Select folder with undocumented snippets')
   if (is.null(path) || is.na(path)) stop('Unable to save snippets; path not valid')
 
+  Tags <- readline('Add tags (comma separated): ')
+  Packages <- readline('Add packages (comma separated): ')
+
   if (is.null(extensions)){
     pattern <- NULL
   }else{
@@ -286,13 +289,16 @@ snip_folder <- function(path=NULL, recursive=TRUE, extensions=NULL){
   for (fname in files){
     readLines(fname) %>%
       add_section('Item 1', '') %>%
-      add_section('Packages', '') %>%
+      add_section('Packages', Packages) %>%
       add_section('Description', '') %>%
-      add_section('Tags', '') %>%
+      add_section('Tags', Tags) %>%
       add_section('Name', sub("(.*)\\..*$", "\\1", basename(fname))) %>%
       add_id() %>%
       writeLines(., make_fname(extract_info(., 'Id')))
   }
+  message('snippets added, updating data')
+  snip_fix()
+  message('done')
 }
 
 #' Import snippets from zip file
