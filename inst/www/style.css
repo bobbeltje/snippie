@@ -1,0 +1,12 @@
+body {
+  background-color: #dcedff;
+}
+.inl_item {
+    display: inline-block;
+}
+.modal-content {
+  background-color: #add8e6;
+}
+#wide_textarea * {
+  width: 100%;
+}

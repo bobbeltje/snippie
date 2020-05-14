@@ -1,6 +1,7 @@
 
 ui <- function(){
   fluidPage(
+    includeCSS(file.path(system.file(package='snippie'), 'www', 'style.css')),
     tags$head(tags$style('#wide_textarea * {width: 100%;}', 'body {background-color: #dcedff;}')),
     tags$h1('Snippie'),
     fluidRow(
@@ -22,8 +23,12 @@ ui <- function(){
         fluidRow(
           column(
             width=12L,
-            actionButton('left', '<', class='btn-info'),
-            actionButton('right', '>', class='btn-info')
+            conditionalPanel(
+              'output.multiple_snips', class='inl_item',
+              actionButton('left', '<', class='btn-info'),
+              actionButton('right', '>', class='btn-info')
+            ),
+            htmlOutput('snip_title', inline=T)
           )
         ),
         fluidRow(

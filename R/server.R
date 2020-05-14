@@ -12,8 +12,8 @@ server <- function(input, output, session){
     showModal(modalDialog(
       fluidRow(column(
         width=12,
-        actionButton('modal_left', '<'),
-        actionButton('modal_right', '>')
+        actionButton('modal_left', '<', class='btn-info'),
+        actionButton('modal_right', '>', class='btn-info')
       )),
       fluidRow(column(
         width=12,
@@ -21,7 +21,7 @@ server <- function(input, output, session){
       )),
       footer=tagList(
         actionButton('create_cancel', 'Cancel'),
-        actionButton('create_save', 'Save')
+        actionButton('create_save', 'Save', class='btn-success')
       )
     ))
   })
@@ -93,8 +93,8 @@ server <- function(input, output, session){
       tags$h2(paste0('Deleting ', id, ' (', rv$d$Name[input$tbl_rows_selected], ')')),
       tags$h3('Are you sure?'),
       footer=tagList(
-        modalButton('cancel'),
-        actionButton('delete_confirm', 'Confirm')
+        modalButton('Cancel'),
+        actionButton('delete_confirm', 'Confirm', class='btn-danger')
       )
     ))
   })
@@ -123,6 +123,12 @@ server <- function(input, output, session){
     readLines(make_fname(id))
   })
 
+  output$multiple_snips <- reactive({
+    req(current_snip())
+    return(length(extract_headers(current_snip())) > 1)
+  })
+  outputOptions(output, 'multiple_snips', suspendWhenHidden=FALSE)
+
   observeEvent(input$left, {
     req(current_snip())
     i <- if (is.null(rv$snip_idx)) 1 else rv$snip_idx
@@ -137,6 +143,13 @@ server <- function(input, output, session){
     i <- i + 1
     if (i > length(extract_headers(current_snip()))) i <- 1
     rv$snip_idx <- i
+  })
+
+  output$snip_title <- renderUI({
+    req(current_snip())
+    i <- if (is.null(rv$snip_idx)) 1 else rv$snip_idx
+    if (i > length(extract_headers(current_snip()))) i <- 1
+    h3(extract_titles(extract_headers(current_snip())[i]), class='inl_item')
   })
 
   output$out <- renderUI({
