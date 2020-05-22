@@ -355,15 +355,17 @@ snip_interactive <- function(){
 #' @export
 snip_save <- function(){
   f_old <- .pkgenv[['snip']]
+  snip <- readLines(f_old)
 
-  v <- validate_snip(f_old)
+  v <- validate_snip(snip=snip)
   if (!v) return(NULL)
 
-  id <- update_snip(f_old, add_id)
+  snip <- add_id(snip)
+  id <- extract_info(snip, 'Id', filter_comments=TRUE)
   f_new <- file.path(loc, 'snippets', paste0('snip_', id, '.R'))
-  file.copy(f_old, f_new)
+  writeLines(snip, f_new)
 
-  update_d(f_new)
+  update_d(snip=snip, id=id)
   message('Snippet saved!')
   invisible(TRUE)
 }
@@ -406,9 +408,9 @@ snip_view <- function(n, exact=F, ...){
 #'
 #' @return invisible(TRUE) when successful
 #'
-update_d <- function(fname){
-  id <- get_id(fname)
-  snip <- readLines(fname)
+update_d <- function(fname, snip=NULL, id=NULL){
+  if (is.null(id)) id <- get_id(fname)
+  if (is.null(snip)) snip <- readLines(fname)
   d <- .pkgenv[['d']]
   if (id %in% d$Id){
     d[d$Id == id, c('Name', 'Packages', 'Tags')] <- c(
@@ -445,10 +447,10 @@ update_snip <- function(fname, f){
 #' @param fname Location of snippet
 #'
 #' @return TRUE if successful, otherwise it calls stop
-validate_snip <- function(fname){
+validate_snip <- function(fname, snip=NULL){
   # fname <- snippie:::.pkgenv$snip
   x <- c('Name', 'Tags', 'Description', 'Packages')
-  snip <- readLines(fname)
+  if (is.null(snip)) snip <- readLines(fname)
   l <- sapply(x, extract_info, snip=snip, simplify=F, USE.NAMES=T)
   if (typeof(l$Name) != 'character' || length(l$Name) != 1 || nchar(l$Name) < 1){
     return('Invalid Name')
