@@ -8,13 +8,13 @@ loc <- rappdirs::user_data_dir('snippie')
   if (!dir.exists(loc)) dir.create(loc, recursive=TRUE)
   fname <- file.path(loc, 'data.csv')
   if (file.exists(fname)){
-    d <- data.table::fread(fname)
+    d <- read.csv(fname)
   }else{
-    d <- data.table::data.table(Id=0, Name='', Packages='', Tags='')[-1, ]
+    d <- data.frame(Id=0, Name='', Packages='', Tags='', stringsAsFactors=F)[-1, ]
   }
   assign(x='d', value=d, envir=.pkgenv)
 }
 
 .onUnload <- function(libname, pkgname){
-  data.table::fwrite(.pkgenv[['d']], file.path(loc, 'data.csv'), na='', row.names=F)
+  write.csv(.pkgenv[['d']], file.path(loc, 'data.csv'), na='', row.names=F)
 }

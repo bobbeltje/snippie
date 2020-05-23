@@ -164,36 +164,19 @@ remove_id <- function(snip){
 #' Use either the snippet Id or its row number from snip_view to select the snippet to delete.
 #'
 #' @param i The row number as indicated by snip_view()
-#' @param Id The snippet's Id
+#' @param id The snippet's Id
 #'
 #' @return
 #' @export
 #'
 #' @examples snip_delete(i=1)
-#' snip_delete(Id=7059297)
-snip_delete <- function(i=NULL, Id=NULL){
-  if (is.null(i) && is.null(Id)) stop('Specify i (the row index from snip_view) or Id')
-  if (!is.null(i) && !is.null(Id)) stop('Specify snippet with either i or Id')
-
-  d <- .pkgenv[['d']]
-  if (!is.null(i)){
-    Id <- d$Id[i]
-  }
-  d <- d[d$Id != Id, ]
-
-  # solution 0: use which?
-  # solution 1: use a different variable
-  # x <- Id
-  # d <- d[Id != x]
-  # solution 2: eval one variable in parent frame
-  # d <- d[Id != evalq(Id, envir=sys.parent(2))]
-  # solution 3:
-  # d <- d[eval(d[, Id %in% ..Id])]
-
-  .pkgenv[['d']] <- d
-  unlink(file.path(loc, 'snippets', paste0('snip_', Id, '.R')))
+#' snip_delete(id=7059297)
+snip_delete <- function(i=NULL, id=NULL){
+  l <- validate_i_and_id(i, id)
+  .pkgenv[['d']] <- .pkgenv[['d']][-l$i, ]
+  unlink(file.path(loc, 'snippets', paste0('snip_', l$id, '.R')))
   message('Snippet deleted')
-  return(Id)
+  return(invisible(l$id))
 }
 
 #' Edit a new snippet
@@ -204,8 +187,8 @@ snip_delete <- function(i=NULL, Id=NULL){
 #' @return
 #' @export
 snip_edit <- function(i=NULL, id=NULL){
-  id <- validate_i_and_id(i, id)
-  src <- file.path(loc, 'snippets', paste0('snip_', id, '.R'))
+  l <- validate_i_and_id(i, id)
+  src <- file.path(loc, 'snippets', paste0('snip_', l$id, '.R'))
   dst <- tempfile('snip', fileext='.R')
   .pkgenv[['snip']] <- dst
   file.copy(src, dst)
@@ -237,7 +220,7 @@ snip_export <- function(path=NULL){
 #'
 #' @param play_it_safe Bool, if TRUE (default) creates a zip of all saved snippets
 #'
-#' @return data.table of available snippets
+#' @return data.frame of available snippets
 #' @export
 #'
 #' @examples snip_fix()
@@ -256,10 +239,11 @@ snip_fix <- function(play_it_safe=TRUE){
       Id=extract_info(snip, 'Id'),
       Name=extract_info(snip, 'Name'),
       Packages=paste(extract_info(snip, 'Packages'), collapse=', '),
-      Tags=paste(extract_info(snip, 'Tags'), collapse=', ')
+      Tags=paste(extract_info(snip, 'Tags'), collapse=', '),
+      stringsAsFactors=F
     )
   })
-  d <- data.table::rbindlist(l)
+  d <- do.call(rbind, l)
   # d$Id <- as.integer(as.character(d$Id))
   .pkgenv[['d']] <- d
   return(invisible(d))
@@ -391,7 +375,7 @@ snip_save <- function(){
 #' @param exact How precise the subsetting should be. Exact==TRUE is not fully exact (yet).
 #' @param ... Subset on any of the columns, eg, snip_view(Package=data.table, Tags=column)
 #'
-#' @return The snippets as data.table
+#' @return The snippets as data.frame
 #' @export
 #'
 #' @examples
@@ -462,15 +446,24 @@ update_snip <- function(fname, f){
 #' @param i The row index for the snippet
 #' @param id The id of the snippet
 #'
-#' @return Either calls stop or returns the id
+#' @return Either calls stop or returns list with i and id
 validate_i_and_id <- function(i, id){
   if (is.null(i) && is.null(id)) stop('Either i or id needs to be provided', call.=F)
-  if (!is.null(i) && i > nrow(.pkgenv$d)){
-    stop(paste0('i (', i, ') is larger than available snippets (', nrow(.pkgenv$d), ')'), call.=F)
+  if (!is.null(i) && !is.null(id)) stop('Either i or id needs to be provided, not both', call.=F)
+
+  if (!is.null(i)){
+    if (length(i) > 1) stop('length of i > 1', call.=F)
+    if (i > nrow(.pkgenv$d)){
+      stop(paste0('i (', i, ') is larger than available snippets (', nrow(.pkgenv$d), ')'), call.=F)
+    }
+    return(list(i=i, id=.pkgenv$d$Id[i]))
   }
-  if (is.null(id)) id <- .pkgenv$d$Id[i]
-  if (! id %in% .pkgenv$d$Id) stop(paste0('id (', id, ') is not a valid snippet id'), call.=F)
-  return(id)
+
+  if (!is.null(id)){
+    if (length(id) > 1) stop('length of id > 1', call.=F)
+    if (!id %in% .pkgenv$d$Id) stop(paste0('id (', id, ') is not a valid snippet id'), call.=F)
+    return(list(id=id, i=which(.pkgenv$d$Id == id)))
+  }
 }
 
 #' Validate snippet before saving
