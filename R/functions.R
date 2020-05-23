@@ -119,16 +119,23 @@ get_id <- function(fname){
 #'
 #' @return Path
 get_path_to_folder <- function(caption){
-  if (exists('tk_choose.dir', where=asNamespace('utils'), mode='function')) {
-    path <- utils::choose.dir(caption = caption)
-  } else if (exists('selectDirectory', where=asNamespace('rstudioapi'), mode='function')) {
-    path <- rstudioapi::selectDirectory(caption = caption)
-  } else if (exists('tk_choose.dir', where=asNamespace('tcltk'), mode='function')) {
-    path <- tcltk::tk_choose.dir(caption = caption)
-  }else{
-    path <- '~'
+  if (nzchar(system.file(package='utils'))){
+    if (exists('tk_choose.dir', where=asNamespace('utils'), mode='function')) {
+      return(utils::choose.dir(caption = caption))
+    }
   }
-  return(path)
+  if (nzchar(system.file(package='rstudioapi'))){
+    if (exists('selectDirectory', where=asNamespace('rstudioapi'), mode='function')) {
+      return(rstudioapi::selectDirectory(caption = caption))
+    }
+  }
+  if (nzchar(system.file(package='tcltk'))){
+    if (exists('tk_choose.dir', where=asNamespace('tcltk'), mode='function')) {
+      return(tcltk::tk_choose.dir(caption = caption))
+    }
+  }
+  message('Using home folder')
+  return('~')
 }
 
 #' Create full path to file (in saved snippets folder) given an id
