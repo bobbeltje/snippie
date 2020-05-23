@@ -159,28 +159,6 @@ remove_id <- function(snip){
   return(snip)
 }
 
-#' Create a skeleton for your snippet
-#'
-#' This will create a temporary file to create a snippet.
-#' Once done, save it with snip_save().
-#'
-#' @param snip_id If NULL then new snip, else edit snippet identified by snip_id
-#'
-#' @return
-#' @export
-snip_create <- function(snip_id=NULL){
-  if (is.null(snip_id)){
-    src <- system.file('templates/snip_skeleton.R', package='snippie')
-  }else{
-    src <- file.path(loc, 'snippets', paste0('snip_', snip_id, '.R'))
-  }
-  dst <- tempfile('snip', fileext='.R')
-  .pkgenv[['snip']] <- dst
-  file.copy(src, dst)
-  file.edit(dst)
-  invisible(TRUE)
-}
-
 #' Delete a snippet
 #'
 #' Use either the snippet Id or its row number from snip_view to select the snippet to delete.
@@ -216,6 +194,23 @@ snip_delete <- function(i=NULL, Id=NULL){
   unlink(file.path(loc, 'snippets', paste0('snip_', Id, '.R')))
   message('Snippet deleted')
   return(Id)
+}
+
+#' Edit a new snippet
+#'
+#' Edit an existing snippet.
+#' Edit the file. Once done, save the file and save the changes with snip_save().
+#'
+#' @return
+#' @export
+snip_edit <- function(i=NULL, id=NULL){
+  id <- validate_i_and_id(i, id)
+  src <- file.path(loc, 'snippets', paste0('snip_', id, '.R'))
+  dst <- tempfile('snip', fileext='.R')
+  .pkgenv[['snip']] <- dst
+  file.copy(src, dst)
+  file.edit(dst)
+  invisible(TRUE)
 }
 
 #' Exports snippets a zip file
@@ -347,6 +342,23 @@ snip_interactive <- function(){
   shiny::shinyApp(ui=ui(), server=server)
 }
 
+#' Create a new snippet
+#'
+#' Create a new snippet.
+#' This will create a template to fill in.
+#' Once done, save the file and add it to your snippets with snip_save().
+#'
+#' @return
+#' @export
+snip_new <- function(){
+  src <- system.file('templates/snip_skeleton.R', package='snippie')
+  dst <- tempfile('snip', fileext='.R')
+  .pkgenv[['snip']] <- dst
+  file.copy(src, dst)
+  file.edit(dst)
+  invisible(TRUE)
+}
+
 #' Save snippet
 #'
 #' This will save the latest opened snippet.
@@ -440,6 +452,25 @@ update_snip <- function(fname, f){
   readLines(fname) %>%
     f() %>%
     writeLines(fname)
+}
+
+#' Validate i and id arguments
+#'
+#' Functions that use either i (row index) or id (snip id) can use
+#' this function to validate correct input
+#'
+#' @param i The row index for the snippet
+#' @param id The id of the snippet
+#'
+#' @return Either calls stop or returns the id
+validate_i_and_id <- function(i, id){
+  if (is.null(i) && is.null(id)) stop('Either i or id needs to be provided', call.=F)
+  if (!is.null(i) && i > nrow(.pkgenv$d)){
+    stop(paste0('i (', i, ') is larger than available snippets (', nrow(.pkgenv$d), ')'), call.=F)
+  }
+  if (is.null(id)) id <- .pkgenv$d$Id[i]
+  if (! id %in% .pkgenv$d$Id) stop(paste0('id (', id, ') is not a valid snippet id'), call.=F)
+  return(id)
 }
 
 #' Validate snippet before saving
