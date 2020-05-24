@@ -15,7 +15,7 @@ n refers to the row.number returned by snip_view()}
 \item{...}{Subset on any of the columns, eg, snip_view(Package=data.table, Tags=column)}
 }
 \value{
-The snippets as data.table
+The snippets as data.frame
 }
 \description{
 Without arguments, all snippets are shown. Select a subset using ...

@@ -10,7 +10,7 @@ snip_fix(play_it_safe = TRUE)
 \item{play_it_safe}{Bool, if TRUE (default) creates a zip of all saved snippets}
 }
 \value{
-data.table of available snippets
+data.frame of available snippets
 }
 \description{
 Attempt to fix snippie by reloading snippet information

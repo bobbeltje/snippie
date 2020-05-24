@@ -233,17 +233,26 @@ snip_export <- function(path=NULL){
 #' @examples snip_fix()
 snip_fix <- function(play_it_safe=TRUE){
   files <- dir(file.path(loc, 'snippets'), full.names=T)
-  zip(file.path(loc, 'backup.zip'), files, flags='-jqFS')
+  if (play_it_safe) zip(file.path(loc, 'backup.zip'), files, flags='-jqFS')
   l <- lapply(files, function(fname){
+    snip <- readLines(fname)
     # deleting invalid files
-    if (!isTRUE(validate_snip(fname))){
+    if (!isTRUE(validate_snip(snip=snip))){
       unlink(fname)
       return(NULL)
     }
-    update_snip(fname, add_id)
-    snip <- readLines(fname)
+    snip <- add_id(snip)
+
+    snip_id <- extract_info(snip, 'Id')
+    fname_id <- get_id(fname)
+
+    if (snip_id != fname_id){
+      unlink(fname)
+      writeLines(snip, make_fname(snip_id))
+    }
+
     data.frame(
-      Id=extract_info(snip, 'Id'),
+      Id=snip_id,
       Name=extract_info(snip, 'Name'),
       Packages=paste(extract_info(snip, 'Packages'), collapse=', '),
       Tags=paste(extract_info(snip, 'Tags'), collapse=', '),

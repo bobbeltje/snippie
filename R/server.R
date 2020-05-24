@@ -102,7 +102,7 @@ server <- function(input, output, session){
   observeEvent(input$delete_confirm, {
     removeModal()
     id <- rv$d$Id[input$tbl_rows_selected]
-    snip_delete(Id=id)
+    snip_delete(id=id)
     rv$d <- snip_view()
   })
 
