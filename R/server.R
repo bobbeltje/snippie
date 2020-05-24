@@ -62,15 +62,15 @@ server <- function(input, output, session){
     id <- get_id(get_filename())
     snip <- unlist(c(
       '# Id ####', id,
-      '# Name ####', rv$snip$name,
-      '# Tags ####', rv$snip$tags,
-      '# Description ####', rv$snip$desc,
-      '# Packages ####', rv$snip$pkgs,
+      '# Name ####', rv$snip$Name,
+      '# Tags ####', rv$snip$Tags,
+      '# Description ####', rv$snip$Description,
+      '# Packages ####', rv$snip$Packages,
       c(sapply(
-        grep('item_', names(rv$snip), value=T),
+        grep('Item_', names(rv$snip), value=T),
         function(x){
           c(
-            paste('# Item', sub('item_', '', x), '####'),
+            paste('#', x, '####'),
             rv$snip[[x]]
           )
         }
@@ -82,6 +82,41 @@ server <- function(input, output, session){
     rv$d <- .pkgenv[['d']]
     rv$snip <- NULL
     removeModal()
+  })
+
+  # ** edit ####
+
+  observeEvent(input$edit, {
+    snip <- current_snip()
+
+    rv$snip <- list(
+      page=1,
+      Name=extract_info(snip, 'Name'),
+      Tags=extract_info(snip, 'Tags'),
+      Description=extract_info(snip, 'Description'),
+      Packages=extract_info(snip, 'Packages')
+    )
+
+    headers <- extract_titles(extract_headers(snip))
+    for (h in headers){
+      rv$snip[[h]] <- extract_info(snip, h, F)
+    }
+
+    showModal(modalDialog(
+      fluidRow(column(
+        width=12,
+        actionButton('modal_left', '<', class='btn-info'),
+        actionButton('modal_right', '>', class='btn-info')
+      )),
+      fluidRow(column(
+        width=12,
+        uiOutput('modal_body')
+      )),
+      footer=tagList(
+        actionButton('create_cancel', 'Cancel'),
+        actionButton('create_save', 'Save', class='btn-success')
+      )
+    ))
   })
 
   # DELETE ####

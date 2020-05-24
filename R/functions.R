@@ -51,6 +51,7 @@ extract_headers <- function(snip, code_only=T){
 #' @return The information as character vector
 #'
 extract_info <- function(snip, type, filter_comments=TRUE){
+  type <- gsub("([.|()\\^{}+$*?]|\\[|\\])", "\\\\\\1", type)  # escape regex characters from type
   snip <- snip[!grepl('^[[:space:]]*$', snip)]
 
   i <- grep(paste0('^# ', type, ' ####$'), snip)
@@ -147,6 +148,18 @@ make_fname <- function(id){
   file.path(loc, 'snippets', paste0('snip_', id, '.R'))
 }
 
+#' Read snippet specified by row number of snip_view
+#'
+#' Read a snippet from file. Specify snippet with row number in snip_view
+#'
+#' @param i Row number
+#'
+#' @return Character vector with snippet
+read_snip <- function(i){
+  l <- validate_i_and_id(i, NULL)
+  readLines(make_fname(l$id))
+}
+
 #' Remove Id from a snippet
 #'
 #' @param snip The snippet
@@ -163,6 +176,28 @@ remove_id <- function(snip){
     snip <- snip[-(which(snip == '# Id ####') : (which(snip == headers[i]) - 1))]
   }
 
+  return(snip)
+}
+
+#' Remove invalid headers
+#'
+#' Removes trailing pound signs from any header that is not one of the main ones, or an Item_ one
+#'
+#' @param snip A snippe
+#'
+#' @return A snippet with invalid headers removed
+remove_invalid_headers <- function(snip){
+  headers <- extract_headers(snip)
+  main <- c("# Id ####", "# Name ####", "# Tags ####", "# Description ####", "# Packages ####")
+  headers <- headers[!headers %in% main]
+  invalid_headers <- character()
+  for (h in headers){
+    x <- sub('^# Item_', '', sub(' ####$', '', h))
+    if (is.na(suppressWarnings(as.integer(x)))){
+      invalid_headers <- c(invalid_headers, h)
+    }
+  }
+  snip[snip %in% invalid_headers] <- sub('#*$', '', snip[snip %in% invalid_headers])
   return(snip)
 }
 
@@ -295,7 +330,8 @@ snip_folder <- function(path=NULL, recursive=TRUE, extensions=NULL){
 
   for (fname in files){
     readLines(fname) %>%
-      add_section('Item 1', '') %>%
+      remove_invalid_headers() %>%
+      add_section('Item_1', '') %>%
       add_section('Packages', Packages) %>%
       add_section('Description', '') %>%
       add_section('Tags', Tags) %>%
@@ -399,7 +435,7 @@ snip_save <- function(){
 #' snip_view(p=plotly)
 snip_view <- function(n, exact=F, ...){
   if (!missing(n)){
-    snip_create(.pkgenv[['d']]$Id[n])
+    snip_edit(id=.pkgenv[['d']]$Id[n])
     return(invisible())
   }
   f <- if (exact) grepl else agrepl

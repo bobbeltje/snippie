@@ -18,18 +18,18 @@ get_modal_page <- function(rv){
   }
   if (rv$snip$page == 1){
     return(tagList(
-      textInput('snipname', 'Name', rv$snip$name),
-      textAreaInput('sniptags', 'Tags', paste(rv$snip$tags, collapse='\n'), rows=3),
-      textAreaInput('snipdesc', 'Description', paste(rv$snip$desc, collapse='\n'), rows=3),
-      textAreaInput('snippkgs', 'Packages', paste(rv$snip$pkgs, collapse='\n'), rows=3)
+      textInput('snipname', 'Name', rv$snip$Name),
+      textAreaInput('sniptags', 'Tags', paste(rv$snip$Tags, collapse='\n'), rows=3),
+      textAreaInput('snipdesc', 'Description', paste(rv$snip$Description, collapse='\n'), rows=3),
+      textAreaInput('snippkgs', 'Packages', paste(rv$snip$Packages, collapse='\n'), rows=3)
     ))
   }else{
     i <- rv$snip$page - 1
     return(
       div(
         id='wide_textarea',
-        textAreaInput('snipitem', tags$h3(paste('Item', i)), rows=20, width='100%',
-                      value=paste(rv$snip[[paste0('item_', i)]], collapse='\n'))
+        textAreaInput('snipitem', tags$h3(paste0('Item_', i)), rows=20, width='100%',
+                      value=paste(rv$snip[[paste0('Item_', i)]], collapse='\n'))
       )
     )
   }
@@ -47,11 +47,11 @@ get_modal_page <- function(rv){
 update_snip_info <- function(rv, input){
   i <- rv$snip$page
   if (i == 1){
-    rv$snip$name <- input$snipname
-    rv$snip$tags <- input$sniptags
-    rv$snip$desc <- input$snipdesc
-    rv$snip$pkgs <- input$snippkgs
+    rv$snip$Name <- input$snipname
+    rv$snip$Tags <- input$sniptags
+    rv$snip$Description <- input$snipdesc
+    rv$snip$Packages <- input$snippkgs
   }else{
-    rv$snip[[paste0('item_', i - 1)]] <- input$snipitem
+    rv$snip[[paste0('Item_', i - 1)]] <- input$snipitem
   }
 }
