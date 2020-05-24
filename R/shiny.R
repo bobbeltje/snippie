@@ -1,4 +1,25 @@
 
+#' Modal for creating/editing snippets
+#'
+#' @return html
+get_modal <- function(){
+  modalDialog(
+    fluidRow(column(
+      width=12,
+      actionButton('modal_left', '<', class='btn-info'),
+      actionButton('modal_right', '>', class='btn-info')
+    )),
+    fluidRow(column(
+      width=12,
+      uiOutput('modal_body')
+    )),
+    footer=tagList(
+      actionButton('create_cancel', 'Cancel'),
+      actionButton('create_save', 'Save', class='btn-success')
+    )
+  )
+}
+
 #' Create UI with inputs for current page in modal for creating snippets
 #'
 #' First page is the meta info (Name, Tags, etc). Second to fifth pages are code
@@ -6,7 +27,7 @@
 #' @param rv reactiveValues()
 #'
 #' @return UI for the modal
-get_modal_page <- function(rv){
+get_modal_body <- function(rv){
   if (is.null(rv[['snip']])){
     rv$snip <- list(page=1)
     return(tagList(

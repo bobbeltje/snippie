@@ -9,25 +9,11 @@ server <- function(input, output, session){
   # CREATE ####
 
   observeEvent(input$create, {
-    showModal(modalDialog(
-      fluidRow(column(
-        width=12,
-        actionButton('modal_left', '<', class='btn-info'),
-        actionButton('modal_right', '>', class='btn-info')
-      )),
-      fluidRow(column(
-        width=12,
-        uiOutput('modal_body')
-      )),
-      footer=tagList(
-        actionButton('create_cancel', 'Cancel'),
-        actionButton('create_save', 'Save', class='btn-success')
-      )
-    ))
+    showModal(get_modal())
   })
 
   output$modal_body <- renderUI({
-    get_modal_page(rv)
+    get_modal_body(rv)
   })
 
   observeEvent(input$modal_left, {
@@ -59,7 +45,7 @@ server <- function(input, output, session){
 
   observeEvent(input$create_save, {
     update_snip_info(rv, input)
-    id <- get_id(get_filename())
+    id <- if (is.null(rv$snip$id)) get_id(get_filename()) else rv$snip$id
     snip <- unlist(c(
       '# Id ####', id,
       '# Name ####', rv$snip$Name,
@@ -91,6 +77,7 @@ server <- function(input, output, session){
 
     rv$snip <- list(
       page=1,
+      id=extract_info(snip, 'Id'),
       Name=extract_info(snip, 'Name'),
       Tags=extract_info(snip, 'Tags'),
       Description=extract_info(snip, 'Description'),
@@ -102,21 +89,7 @@ server <- function(input, output, session){
       rv$snip[[h]] <- extract_info(snip, h, F)
     }
 
-    showModal(modalDialog(
-      fluidRow(column(
-        width=12,
-        actionButton('modal_left', '<', class='btn-info'),
-        actionButton('modal_right', '>', class='btn-info')
-      )),
-      fluidRow(column(
-        width=12,
-        uiOutput('modal_body')
-      )),
-      footer=tagList(
-        actionButton('create_cancel', 'Cancel'),
-        actionButton('create_save', 'Save', class='btn-success')
-      )
-    ))
+    showModal(get_modal())
   })
 
   # DELETE ####
