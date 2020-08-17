@@ -4,10 +4,12 @@
 \alias{snip_export}
 \title{Exports snippets a zip file}
 \usage{
-snip_export(path = NULL)
+snip_export(path = NULL, fname = "snippets.zip")
 }
 \arguments{
 \item{path}{Path to directory. Leave empty to choose one interactively.}
+
+\item{fname}{Name of the exported zip}
 }
 \description{
 Choose a directory interactively (or specify directly with path argument).

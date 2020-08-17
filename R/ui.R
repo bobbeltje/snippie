@@ -10,7 +10,8 @@ ui <- function(){
         actionButton('create', 'Create snippet', class='btn-success'),
         actionButton('edit', 'Edit snippet', class='btn-warning'),
         actionButton('delete', 'Delete snippet', class='btn-danger'),
-        actionButton('load', 'Load snippets', class='btn-primary')
+        actionButton('load', 'Load snippets', class='btn-primary'),
+        downloadButton('export', 'Export all')
       )
     ),
     fluidRow(

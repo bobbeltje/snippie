@@ -1,12 +1,16 @@
 
 server <- function(input, output, session){
 
+  make_dirs('tmp')
+
   rv <- reactiveValues(
     d=.pkgenv[['d']]
   )
 
 
-  # CREATE ####
+  # BUTTONS ####
+
+  # ** create ####
 
   observeEvent(input$create, {
     showModal(get_modal())
@@ -92,7 +96,7 @@ server <- function(input, output, session){
     showModal(get_modal())
   })
 
-  # DELETE ####
+  # ** delete ####
 
   observeEvent(input$delete, {
     if (is.null(input$tbl_rows_selected)) return(NULL)
@@ -113,6 +117,13 @@ server <- function(input, output, session){
     snip_delete(id=id)
     rv$d <- snip_view()
   })
+
+  # ** export ####
+
+  output$export <- downloadHandler(
+    'snippets.zip',
+    function(file) snip_export(fname=file)
+  )
 
 
   # VIEW ####

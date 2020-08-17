@@ -139,6 +139,17 @@ get_path_to_folder <- function(caption){
   return('~')
 }
 
+#' Make dirs
+#'
+#' Create the directories specified in x
+#'
+#' @param x A character vector of dirs
+make_dirs <- function(x){
+  for (i in x){
+    if (!dir.exists(i)) dir.create(i)
+  }
+}
+
 #' Create full path to file (in saved snippets folder) given an id
 #'
 #' @param id Id of a snippet
@@ -243,19 +254,24 @@ snip_edit <- function(i=NULL, id=NULL){
 #' Choose a directory interactively (or specify directly with path argument).
 #'
 #' @param path Path to directory. Leave empty to choose one interactively.
+#' @param fname Name of the exported zip
 #'
 #' @export
-snip_export <- function(path=NULL){
+snip_export <- function(path=NULL, fname='snippets.zip'){
+  shiny_call <- nzchar(system.file(package='shiny')) && !is.null(shiny::getDefaultReactiveDomain())
 
-  if (is.null(path)) path <- get_path_to_folder('Select directory to save the snippets')
-  if (is.null(path) || is.na(path)) stop('Unable to save snippets; path not valid')
+  if (!shiny_call){
+    if (is.null(path)) path <- get_path_to_folder('Select directory to save the snippets')
+    if (is.null(path) || is.na(path)) stop('Unable to save snippets; path not valid')
+  }
 
   files <- dir(file.path(loc, 'snippets'), full.names=T)
-  fname <- file.path(path, 'snippets.zip')
+  fname <- if (shiny_call) fname else file.path(path, fname)
   if (file.exists(fname)) file.remove(fname)
   zip(fname, files, flags='-jqFS')
 
-  message('snippets.zip saved in ', path)
+  if (!shiny_call) message('snippets.zip saved in ', path)
+  invisible(NULL)
 }
 
 #' Attempt to fix snippie by reloading snippet information
