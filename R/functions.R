@@ -227,6 +227,7 @@ remove_invalid_headers <- function(snip){
 snip_delete <- function(i=NULL, id=NULL){
   l <- validate_i_and_id(i, id)
   .pkgenv[['d']] <- .pkgenv[['d']][-l$i, ]
+  row.names(.pkgenv[['d']]) <- seq_len(nrow(.pkgenv[['d']]))
   unlink(file.path(loc, 'snippets', paste0('snip_', l$id, '.R')))
   message('Snippet deleted')
   return(invisible(l$id))
@@ -340,7 +341,7 @@ snip_folder <- function(path=NULL, recursive=TRUE, extensions=NULL){
   if (is.null(extensions)){
     pattern <- NULL
   }else{
-    pattern <- paste0('.', extensions, '$')
+    pattern <- paste0('.', extensions, '$', collapse='|')
   }
   files <- dir(path, pattern=pattern, full.names=T, recursive=recursive)
 
